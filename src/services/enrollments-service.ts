@@ -7,7 +7,9 @@ import { exclude } from '@/utils/prisma-utils';
 import { AddressResult } from '@/protocols';
 
 async function getAddressFromCEP(cep: string) {
-  const result: AxiosResponse<AddressResult> = await request.get(`${process.env.VIA_CEP_API}/${cep}/json/`);
+  const result: AxiosResponse<AddressResult> = await request.get(`${process.env.VIA_CEP_API}/${cep}/json/`, () => {
+    throw invalidDataError('CEP');
+  });
 
   if (result.data.erro === 'true') {
     throw invalidDataError('CEP');
@@ -46,11 +48,7 @@ async function createOrUpdateEnrollmentWithAddress(params: CreateOrUpdateEnrollm
   const address = getAddressForUpsert(params.address);
 
   // TODO - Verificar se o CEP é válido antes de associar ao enrollment.
-  const result: AxiosResponse<AddressResult> = await request.get(`${process.env.VIA_CEP_API}/${address.cep}/json/`);
-
-  if (result.data.erro === 'true') {
-    throw invalidDataError('CEP');
-  }
+  await getAddressFromCEP(address.cep);
   const newEnrollment = await enrollmentRepository.upsert(params.userId, enrollment, exclude(enrollment, 'userId'));
 
   await addressRepository.upsert(newEnrollment.id, address, address);
