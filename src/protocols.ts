@@ -10,3 +10,12 @@ export type RequestError = {
   name: string;
   message: string;
 };
+
+export type AddressResult = {
+  erro?: string;
+  logradouro: string;
+  complemento: string;
+  bairro: string;
+  localidade: string;
+  uf: string;
+};
