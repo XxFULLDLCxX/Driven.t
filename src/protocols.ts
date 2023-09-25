@@ -26,3 +26,16 @@ export type AddressEnrollment = {
 export type CEP = {
   cep: string;
 };
+
+export type CardData = {
+  issuer: string;
+  number: string;
+  name: string;
+  expirationDate: string | Date;
+  cvv: number;
+};
+
+export type CreatePayment = {
+  ticketId: number;
+  cardData: CardData;
+};

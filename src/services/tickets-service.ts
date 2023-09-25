@@ -1,7 +1,5 @@
-import { ticketsRepository } from '@/repositories/tickets-repository';
 import { notFoundError } from '@/errors';
-import { ticketSchema } from '@/schemas';
-import { enrollmentRepository } from '@/repositories';
+import { enrollmentRepository, ticketRepository } from '@/repositories';
 
 async function validateEnrollment(userId: number) {
   const enrollment = await enrollmentRepository.findByUserId(userId);
@@ -10,26 +8,26 @@ async function validateEnrollment(userId: number) {
 }
 
 async function validateTicketType(id: number) {
-  const ticketType = await ticketsRepository.findOneTicketsTypesById(id);
+  const ticketType = await ticketRepository.findFirstTicketTypeById(id);
   if (!ticketType) throw notFoundError();
   return ticketType.id;
 }
 
 async function getTicketsByUserId(userId: number) {
   const enrollmentId = await validateEnrollment(userId);
-  const result = await ticketsRepository.findByEnrollmentId(enrollmentId);
+  const result = await ticketRepository.findByEnrollmentId(enrollmentId);
   if (!result) throw notFoundError();
   return result;
 }
 
 function getTicketsTypes() {
-  return ticketsRepository.findTicketsTypes();
+  return ticketRepository.findTicketsTypes();
 }
 
 async function createTickets(ticketTypeId: number, userId: number) {
   const validTicketTypeId = await validateTicketType(ticketTypeId);
   const validEnrollmentId = await validateEnrollment(userId);
-  return ticketsRepository.create({
+  return ticketRepository.create({
     status: 'RESERVED',
     ticketTypeId: validTicketTypeId,
     enrollmentId: validEnrollmentId,
@@ -38,7 +36,7 @@ async function createTickets(ticketTypeId: number, userId: number) {
   });
 }
 
-export const ticketsService = {
+export const ticketService = {
   getTicketsByUserId,
   getTicketsTypes,
   createTickets,
