@@ -8,6 +8,11 @@ export function handleApplicationErrors(
   res: Response,
   next: NextFunction,
 ) {
+  if (err.name === 'PaymentRequired') {
+    return res.status(httpStatus.PAYMENT_REQUIRED).send({
+      message: err.message,
+    })
+  }
   if (err.name === 'BadRequest') {
     return res.status(httpStatus.BAD_REQUEST).send({
       message: err.message,
@@ -37,7 +42,7 @@ export function handleApplicationErrors(
     });
   }
 
-  if (err.name === 'NotFoundError') {
+  if (err.name === 'NotFoundError' || err.name === 'NotFound') {
     return res.status(httpStatus.NOT_FOUND).send({
       message: err.message,
     });

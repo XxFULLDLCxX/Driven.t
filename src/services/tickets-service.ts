@@ -1,11 +1,6 @@
-import { notFoundError } from '@/errors';
-import { enrollmentRepository, ticketRepository } from '@/repositories';
-
-async function validateEnrollment(userId: number) {
-  const enrollment = await enrollmentRepository.findByUserId(userId);
-  if (!enrollment) throw notFoundError();
-  return enrollment.id;
-}
+import { badRequest, notFoundError } from '@/errors';
+import { ticketRepository } from '@/repositories';
+import { validateEnrollment } from './enrollments-service';
 
 async function validateTicketType(id: number) {
   const ticketType = await ticketRepository.findFirstTicketTypeById(id);
@@ -13,7 +8,7 @@ async function validateTicketType(id: number) {
   return ticketType.id;
 }
 
-async function getTicketsByUserId(userId: number) {
+export async function getTicketsByUserId(userId: number) {
   const enrollmentId = await validateEnrollment(userId);
   const result = await ticketRepository.findByEnrollmentId(enrollmentId);
   if (!result) throw notFoundError();
