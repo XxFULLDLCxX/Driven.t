@@ -1,50 +1,43 @@
-import { badRequest, notFoundError, unauthorizedError } from '@/errors';
-import { CreatePayment } from '@/protocols';
-import { enrollmentRepository, paymentRepository, ticketRepository } from '@/repositories';
+import { invalidDataError, notFoundError, unauthorizedError } from '@/errors';
+import { CardPaymentParams, PaymentParams } from '@/protocols';
+import { enrollmentRepository, paymentsRepository, ticketsRepository } from '@/repositories';
 
-async function validateTicketId(ticketId: number) {
-  if (isNaN(ticketId)) throw badRequest();
-  const ticket = await ticketRepository.findByTicketId(ticketId);
+async function verifyTicketAndEnrollment(userId: number, ticketId: number) {
+  if (!ticketId || isNaN(ticketId)) throw invalidDataError('ticketId');
+
+  const ticket = await ticketsRepository.findTicketById(ticketId);
   if (!ticket) throw notFoundError();
-  return ticket;
+
+  const enrollment = await enrollmentRepository.findWithAddressByUserId(userId);
+  if (ticket.enrollmentId !== enrollment.id) throw unauthorizedError();
+
+  return { ticket, enrollment };
 }
 
-async function validateAuthorization(enrollmentId: number, userId: number) {
-  const enrollment = await enrollmentRepository.findByUserId(userId);
-  if (enrollmentId !== enrollment.id) throw unauthorizedError();
+async function getPaymentByTicketId(userId: number, ticketId: number) {
+  await verifyTicketAndEnrollment(userId, ticketId);
+
+  const payment = await paymentsRepository.findPaymentByTicketId(ticketId);
+
+  return payment;
 }
 
-async function getPaymentsByTicketId(ticketId: number, userId: number) {
-  if (ticketId === undefined) throw badRequest(`\n"ticketId" query parameter is not defined.`);
-  const { enrollmentId } = await validateTicketId(ticketId);
-  await validateAuthorization(enrollmentId, userId);
+async function paymentProcess(ticketId: number, userId: number, cardData: CardPaymentParams) {
+  const { ticket } = await verifyTicketAndEnrollment(userId, ticketId);
 
-  return paymentRepository.findPaymentByTicketId(ticketId);
-}
-
-async function createPayments(payment: CreatePayment, userId: number) {
-  const {
-    enrollmentId,
-    TicketType: { price },
-  } = await validateTicketId(payment.ticketId);
-  await validateAuthorization(enrollmentId, userId);
-  const {
+  const paymentData: PaymentParams = {
     ticketId,
-    cardData: { issuer, number },
-  } = payment;
-  await ticketRepository.updateTicketStatusToPAID(payment.ticketId);
-  
-  return paymentRepository.createPayment({
-    ticketId,
-    value: price,
-    cardIssuer: issuer,
-    cardLastDigits: number.slice(-4),
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  });
+    value: ticket.TicketType.price,
+    cardIssuer: cardData.issuer,
+    cardLastDigits: cardData.number.toString().slice(-4),
+  };
+
+  const payment = await paymentsRepository.createPayment(ticketId, paymentData);
+  await ticketsRepository.ticketProcessPayment(ticketId);
+  return payment;
 }
 
-export const paymentService = {
-  getPaymentsByTicketId,
-  createPayments,
+export const paymentsService = {
+  getPaymentByTicketId,
+  paymentProcess,
 };

@@ -1,9 +1,9 @@
-import { getHotels, getHotelsWithRooms } from '@/controllers';
-import { authenticateToken } from '@/middlewares';
 import { Router } from 'express';
+import { authenticateToken } from '@/middlewares';
+import { getHotels, getHotelsWithRooms } from '@/controllers';
 
-export const hotelRouter = Router();
-hotelRouter
-  .all('/*', authenticateToken)
-  .get('/', getHotels)
-  .get('/:hotelId', getHotelsWithRooms);
+const hotelsRouter = Router();
+
+hotelsRouter.all('/*', authenticateToken).get('/', getHotels).get('/:hotelId', getHotelsWithRooms);
+
+export { hotelsRouter };
