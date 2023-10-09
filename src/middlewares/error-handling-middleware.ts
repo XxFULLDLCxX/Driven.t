@@ -8,6 +8,12 @@ export function handleApplicationErrors(
   res: Response,
   next: NextFunction,
 ) {
+  if (err.name === 'Forbidden') {
+    return res.status(httpStatus.FORBIDDEN).send({
+      message: err.message,
+    });
+  }
+
   if (err.name === 'CannotEnrollBeforeStartDateError') {
     return res.status(httpStatus.BAD_REQUEST).send({
       message: err.message,
