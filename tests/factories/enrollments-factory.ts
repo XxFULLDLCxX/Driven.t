@@ -1,9 +1,36 @@
 import faker from '@faker-js/faker';
 import { generateCPF, getStates } from '@brazilian-utils/brazilian-utils';
-import { User } from '@prisma/client';
+import { Address, Enrollment, User } from '@prisma/client';
 
 import { createUser } from './users-factory';
 import { prisma } from '@/config';
+
+export function buildAddressInput(enrollmentId: number): Omit<Address, 'id'> {
+  return {
+    cep: faker.address.zipCode(),
+    street: faker.address.streetName(),
+    city: faker.address.city(),
+    state: faker.helpers.arrayElement(getStates()).name,
+    number: faker.datatype.number().toString(),
+    neighborhood: faker.address.city(),
+    addressDetail: null,
+    enrollmentId,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+}
+
+export function buildEnrollmentInput(incomingUser: User): Omit<Enrollment, 'id'> {
+  return {
+    name: faker.name.findName(),
+    cpf: generateCPF(),
+    birthday: faker.date.past(),
+    phone: faker.phone.phoneNumber('(##) 9####-####'),
+    userId: incomingUser.id,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+}
 
 export async function createEnrollmentWithAddress(user?: User) {
   const incomingUser = user || (await createUser());
