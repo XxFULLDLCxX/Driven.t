@@ -10,7 +10,7 @@ import { createHotel, createRoomWithHotelId } from '../factories/hotels-factory'
 import app, { init } from '@/app';
 import { prisma } from '@/config';
 
-const BASE_URL = '/bookings';
+const BASE_URL = '/booking';
 let session: { token: string; user: User };
 
 beforeAll(async () => {
@@ -32,7 +32,7 @@ const PUT = async (url: string, token: string, body: object) =>
 const POST = async (url: string, token: string, body: object) =>
   await server.post(url).set('Authorization', `Bearer ${token}`).send(body);
 
-describe(`Check Authorization on GET /bookings, POST /bookings and PUT /bookings/:bookingId`, () => {
+describe(`Check Authorization on GET /booking, POST /booking and PUT /booking/:bookingId`, () => {
   it('should respond with status 401 if no token is given', async () => {
     expect((await server.get(BASE_URL)).status).toBe(httpStatus.UNAUTHORIZED);
     expect((await server.post(BASE_URL)).status).toBe(httpStatus.UNAUTHORIZED);
@@ -53,7 +53,7 @@ describe(`Check Authorization on GET /bookings, POST /bookings and PUT /bookings
   });
 });
 describe('when token is valid', () => {
-  describe('GET /bookings', () => {
+  describe('GET /booking', () => {
     it('should respond with status 404', async () => {
       const response = await GET(BASE_URL, session.token);
       expect(response.status).toBe(404);
@@ -78,7 +78,7 @@ describe('when token is valid', () => {
       });
     });
   });
-  describe('POST /bookings', () => {
+  describe('POST /booking', () => {
     describe('should respond with status 403', () => {
       it('should respond with status 404', async () => {
         const { status } = await POST(BASE_URL, session.token, { roomId: 1 });
@@ -112,7 +112,7 @@ describe('when token is valid', () => {
       );
     });
   });
-  describe('PUT /bookings/:bookingId', () => {
+  describe('PUT /booking/:bookingId', () => {
     describe('should respond with status 403', () => {
       it('should respond with status 404', async () => {
         const hotel = await createHotel();
