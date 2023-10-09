@@ -79,17 +79,15 @@ describe('when token is valid', () => {
     });
   });
   describe('POST /booking', () => {
-    describe('should respond with status 403', () => {
-      it('should respond with status 404', async () => {
-        const { status } = await POST(BASE_URL, session.token, { roomId: 1 });
-        expect(status).toBe(404);
-      });
-      it('should respond with status 403', async () => {
-        const hotel = await createHotel();
-        const room = await createRoomWithHotelId(hotel.id);
-        const { status } = await POST(BASE_URL, session.token, { roomId: room.id });
-        expect(status).toBe(403);
-      });
+    it('should respond with status 404', async () => {
+      const { status } = await POST(BASE_URL, session.token, { roomId: 1 });
+      expect(status).toBe(404);
+    });
+    it('should respond with status 403', async () => {
+      const hotel = await createHotel();
+      const room = await createRoomWithHotelId(hotel.id);
+      const { status } = await POST(BASE_URL, session.token, { roomId: room.id });
+      expect(status).toBe(403);
     });
 
     it('should respond with status 200', async () => {
@@ -113,8 +111,8 @@ describe('when token is valid', () => {
     });
   });
   describe('PUT /booking/:bookingId', () => {
-    describe('should respond with status 403', () => {
-      it('should respond with status 404', async () => {
+    describe('should respond with status 404', () => {
+      it('if the roomId is not found', async () => {
         const hotel = await createHotel();
         const room = await createRoomWithHotelId(hotel.id);
         const booking = await createBooking(room.id, session.user.id);
@@ -122,7 +120,15 @@ describe('when token is valid', () => {
         const { status } = await PUT(`${BASE_URL}/${booking.id}`, session.token, { roomId: room.id + 1 });
         expect(status).toBe(404);
       });
-      it('should respond with status 403', async () => {
+    });
+    describe('should respond with status 403', () => {
+      it('if the user does not have a booking', async () => {
+        const hotel = await createHotel();
+        const room = await createRoomWithHotelId(hotel.id);
+        const { status } = await PUT(`${BASE_URL}/1`, session.token, { roomId: room.id });
+        expect(status).toBe(403);
+      });
+      it('if the new room has no vacancy', async () => {
         const user = await createUser();
         const hotel = await createHotel();
         const room = [await createRoomWithHotelId(hotel.id), await createRoomWithHotelId(hotel.id, 1)];
